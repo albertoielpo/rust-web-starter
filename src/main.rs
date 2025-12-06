@@ -15,14 +15,15 @@ use actix_web::{
     web,
 };
 use actix_web_lab::middleware::CatchPanic;
-use handlebars::{DirectorySourceOptions, Handlebars};
+use handlebars::Handlebars;
 use log::debug;
 use rust_web_starter::{
-    shared::config::config::{build_server_bind, init_logger, init_mongodb},
+    shared::config::config::{
+        build_handlebars, build_server_bind, get_assets_dir, init_logger, init_mongodb,
+    },
     users,
 };
 use serde::Serialize;
-use std::env;
 use time::{OffsetDateTime, format_description::well_known::Iso8601};
 
 #[derive(Serialize)]
@@ -55,38 +56,14 @@ async fn index(hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse> {
 /// and starts listening for HTTP requests on 127.0.0.1:8080.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let mut handlebars = Handlebars::new();
-
-    // Get templates directory from TEMPLATES_DIR environment variable
-    // or default to ./templates relative to the current working directory
-    let templates_dir = env::var("TEMPLATES_DIR").unwrap_or_else(|_| {
-        let mut path = env::current_dir().expect("Failed to get current directory");
-        path.push("templates");
-        path.to_string_lossy().to_string()
-    });
-
-    println!("Loading templates from: {}", templates_dir);
-
-    // Register all Handlebars templates from the templates directory
-    handlebars
-        .register_templates_directory(&templates_dir, DirectorySourceOptions::default())
-        .expect("templates directory not found");
-
-    let handlebars_ref = web::Data::new(handlebars);
-
-    // Get assets directory from ASSETS_DIR environment variable
-    // or default to ./assets relative to the current working directory
-    let assets_dir = env::var("ASSETS_DIR").unwrap_or_else(|_| {
-        let mut path = env::current_dir().expect("Failed to get current directory");
-        path.push("assets");
-        path.to_string_lossy().to_string()
-    });
-
-    println!("Serving static files from: {}", assets_dir);
-
     init_logger();
+    let handlebars = build_handlebars();
+    let assets_dir = get_assets_dir();
     let server_bind = build_server_bind();
     let mongodb_client = init_mongodb().await;
+
+    let handlebars_ref = web::Data::new(handlebars);
+    let mongodb_ref = web::Data::new(mongodb_client);
 
     debug!(
         "Server bind: address {} port {}",
@@ -95,7 +72,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(mongodb_client.clone()))
+            .app_data(mongodb_ref.clone())
             .app_data(handlebars_ref.clone())
             .wrap(NormalizePath::new(TrailingSlash::Trim)) // normalize path
             .wrap(CatchPanic::default()) // CatchPanic must be before Logger

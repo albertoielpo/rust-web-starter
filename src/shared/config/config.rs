@@ -1,8 +1,12 @@
+use handlebars::{DirectorySourceOptions, Handlebars};
+use log::debug;
 use mongodb::Client;
 use std::env;
 
 const DEFAULT_PORT: u16 = 3000;
 const DEFAULT_ADDRESS: &str = "0.0.0.0";
+const DEFAULT_TEMPLATES_DIR: &str = "./templates";
+const DEFAULT_ASSETS_DIR: &str = "./assets";
 
 /// Mongodb database name
 pub const DATABASE_NAME: &str = "template";
@@ -37,4 +41,36 @@ pub fn build_server_bind() -> ServerBind {
 pub async fn init_mongodb() -> Client {
     let uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".into());
     Client::with_uri_str(uri).await.expect("failed to connect")
+}
+
+/// Build handlebars template engine with templates directory
+pub fn build_handlebars() -> Handlebars<'static> {
+    let mut handlebars = Handlebars::new();
+
+    let templates_dir = env::var("TEMPLATES_DIR").unwrap_or_else(|_| {
+        let mut path = env::current_dir().expect("Failed to get current directory");
+        path.push(DEFAULT_TEMPLATES_DIR);
+        path.to_string_lossy().to_string()
+    });
+
+    debug!("Loading templates from: {}", templates_dir);
+
+    handlebars
+        .register_templates_directory(&templates_dir, DirectorySourceOptions::default())
+        .expect("templates directory not found");
+
+    handlebars
+}
+
+/// Get assets directory path from env or default
+pub fn get_assets_dir() -> String {
+    let assets_dir = env::var("ASSETS_DIR").unwrap_or_else(|_| {
+        let mut path = env::current_dir().expect("Failed to get current directory");
+        path.push(DEFAULT_ASSETS_DIR);
+        path.to_string_lossy().to_string()
+    });
+
+    debug!("Serving static files from: {}", assets_dir);
+
+    assets_dir
 }
