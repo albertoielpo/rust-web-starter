@@ -1,0 +1,36 @@
+### 
+GET http://localhost:3000/users
+Accept: application/json
+
+### 
+
+GET http://localhost:3000/users/693495db65e42165ad766f3c
+Accept: application/json
+
+###
+POST  http://localhost:3000/users
+Accept: application/json
+Content-Type: application/json
+
+{
+    "first_name": "Alberto",
+    "last_name": "Ielpo",
+    "email": "alberto.ielpo@gmail.com",
+    "age": 10
+}
+
+
+###
+PATCH  http://localhost:3000/users/693495db65e42165ad766f3c
+Accept: application/json
+Content-Type: application/json
+
+{
+    "first_name": "Venturini",
+    "last_name": "Ielpo",
+    "email": "venturini.consuelo@gmail.com",
+    "age": 10
+}
+
+###
+DELETE http://localhost:3000/users/6866573e81b529d76bae47f6
