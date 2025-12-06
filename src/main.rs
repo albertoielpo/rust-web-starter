@@ -17,6 +17,7 @@ use actix_web::{
 use actix_web_lab::middleware::CatchPanic;
 use handlebars::Handlebars;
 use log::debug;
+use redis::{AsyncCommands, RedisError, aio::ConnectionManager};
 use rust_web_starter::{
     shared::config::config::{
         build_handlebars, build_server_bind, get_assets_dir, init_logger, init_mongodb, init_redis,
@@ -29,20 +30,25 @@ use time::{OffsetDateTime, format_description::well_known::Iso8601};
 #[derive(Serialize)]
 struct IndexData {
     iso_date: String,
+    mykey: String,
 }
 
 /// Serves the index page by rendering the Handlebars template.
 ///
 /// This handler loads the `index.hbs` template, injects the current ISO 8601
 /// formatted timestamp, and returns the rendered HTML response.
-async fn index(hb: web::Data<Handlebars<'_>>) -> Result<HttpResponse> {
+async fn index(
+    hb: web::Data<Handlebars<'_>>,
+    redis: web::Data<ConnectionManager>,
+) -> Result<HttpResponse> {
     let now = OffsetDateTime::now_utc();
     let iso_date = now
         .format(&Iso8601::DEFAULT)
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
-    let data = IndexData { iso_date };
-
+    let x: Result<String, RedisError> = redis.get_ref().clone().get("mykey").await;
+    let x = x.map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+    let data = IndexData { iso_date, mykey: x };
     let body = hb
         .render("index", &data)
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
