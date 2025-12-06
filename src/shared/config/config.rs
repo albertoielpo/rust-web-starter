@@ -1,6 +1,7 @@
 use handlebars::{DirectorySourceOptions, Handlebars};
 use log::{debug, error, info};
-use mongodb::{options::ClientOptions, Client};
+use mongodb::{Client, options::ClientOptions};
+use redis::aio::ConnectionManager;
 use std::{env, time::Duration};
 
 const DEFAULT_PORT: u16 = 3000;
@@ -8,6 +9,7 @@ const DEFAULT_ADDRESS: &str = "0.0.0.0";
 const DEFAULT_TEMPLATES_DIR: &str = "./templates";
 const DEFAULT_ASSETS_DIR: &str = "./assets";
 const DEFAULT_MONGODB_TIMEOUT_SECS: u64 = 10;
+const DEFAULT_REDIS_TIMEOUT_SECS: u64 = 10;
 
 /// Mongodb database name
 pub const DATABASE_NAME: &str = "template";
@@ -120,4 +122,47 @@ pub fn get_assets_dir() -> String {
     debug!("Serving static files from: {}", assets_dir);
 
     assets_dir
+}
+
+/// Init connection to Redis and return the connection manager
+pub async fn init_redis() -> ConnectionManager {
+    let uri = env::var("REDIS_URI").unwrap_or_else(|_| "redis://localhost:6379".into());
+
+    let timeout_secs = env::var("REDIS_TIMEOUT_SECS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(DEFAULT_REDIS_TIMEOUT_SECS);
+
+    debug!(
+        "Connecting to Redis at: {} (timeout: {}s)",
+        uri, timeout_secs
+    );
+
+    let client = match redis::Client::open(uri.as_str()) {
+        Ok(client) => client,
+        Err(e) => {
+            error!("Failed to create Redis client for {}: {}", uri, e);
+            panic!("Failed to create Redis client: {}", e);
+        }
+    };
+
+    // Create connection manager with automatic reconnection (with timeout)
+    let timeout_duration = Duration::from_secs(timeout_secs);
+    match actix_web::rt::time::timeout(timeout_duration, ConnectionManager::new(client)).await {
+        Ok(Ok(manager)) => manager,
+        Ok(Err(e)) => {
+            error!("Failed to create Redis connection manager: {}", e);
+            panic!("Failed to create Redis connection manager: {}", e);
+        }
+        Err(_) => {
+            error!(
+                "Timeout creating Redis connection manager after {}s",
+                timeout_secs
+            );
+            panic!(
+                "Timeout creating Redis connection manager after {}s",
+                timeout_secs
+            );
+        }
+    }
 }

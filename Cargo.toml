@@ -17,3 +17,5 @@ env_logger = "0.11.8"
 mongodb = "3.4.1"
 actix-web-lab = "0.24.3"
 log = "0.4.29"
+# Redis client with async support and connection pooling
+redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }

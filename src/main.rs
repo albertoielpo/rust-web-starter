@@ -19,7 +19,7 @@ use handlebars::Handlebars;
 use log::debug;
 use rust_web_starter::{
     shared::config::config::{
-        build_handlebars, build_server_bind, get_assets_dir, init_logger, init_mongodb,
+        build_handlebars, build_server_bind, get_assets_dir, init_logger, init_mongodb, init_redis,
     },
     users,
 };
@@ -61,9 +61,11 @@ async fn main() -> std::io::Result<()> {
     let assets_dir = get_assets_dir();
     let server_bind = build_server_bind();
     let mongodb_client = init_mongodb().await;
+    let redis_manager = init_redis().await;
 
     let handlebars_ref = web::Data::new(handlebars);
     let mongodb_ref = web::Data::new(mongodb_client);
+    let redis_ref = web::Data::new(redis_manager);
 
     debug!(
         "Server bind: address {} port {}",
@@ -73,6 +75,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(mongodb_ref.clone())
+            .app_data(redis_ref.clone())
             .app_data(handlebars_ref.clone())
             .wrap(NormalizePath::new(TrailingSlash::Trim)) // normalize path
             .wrap(CatchPanic::default()) // CatchPanic must be before Logger

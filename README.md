@@ -12,6 +12,7 @@ This project provides a foundational template for developing web applications an
 - **Actix-files** - Static file serving for assets (CSS, JavaScript, images)
 - **Handlebars** - Server-side templating engine for dynamic HTML rendering
 - **MongoDB** - NoSQL database integration with async driver
+- **Redis** - In-memory data store with connection pooling and automatic reconnection
 - **JSON API** - RESTful endpoints with JSON request/response handling
 - **Logging** - Structured logging with `env_logger` and configurable log levels
 - **Time** - Modern date and time handling with ISO 8601 support
@@ -51,6 +52,7 @@ src/
 - Rust 2024 edition or later
 - Cargo package manager
 - MongoDB instance (local or remote)
+- Redis instance (local or remote)
 
 ### Installation
 
@@ -78,6 +80,10 @@ Environment variables for customization:
 #### Database Configuration
 - `MONGODB_URI` - MongoDB connection string (default: `mongodb://localhost:27017`)
 - `MONGODB_TIMEOUT_SECS` - MongoDB connection timeout in seconds (default: `10`)
+
+#### Cache Configuration
+- `REDIS_URI` - Redis connection string (default: `redis://localhost:6379`)
+- `REDIS_TIMEOUT_SECS` - Redis connection timeout in seconds (default: `10`)
 
 #### Path Configuration
 - `TEMPLATES_DIR` - Path to Handlebars templates (default: `./templates`)
@@ -119,6 +125,7 @@ docker run -d -p 8080:8080 rust-web-starter
 docker run -d -p 8080:8080 \
   -e BIND_PORT=8080 \
   -e MONGODB_URI=mongodb://mongo:27017 \
+  -e REDIS_URI=redis://redis:6379 \
   -e RUST_LOG=info \
   rust-web-starter
 
