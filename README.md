@@ -77,6 +77,7 @@ Environment variables for customization:
 
 #### Database Configuration
 - `MONGODB_URI` - MongoDB connection string (default: `mongodb://localhost:27017`)
+- `MONGODB_TIMEOUT_SECS` - MongoDB connection timeout in seconds (default: `10`)
 
 #### Path Configuration
 - `TEMPLATES_DIR` - Path to Handlebars templates (default: `./templates`)
