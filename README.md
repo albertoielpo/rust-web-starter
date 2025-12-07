@@ -91,6 +91,7 @@ src/products/
 - **Domain Modules**: Features organized by domain (home, users, etc.) for scalability
 - **Clear Separation**: Render modules for HTML, controller modules for JSON APIs
 - **Dependency Injection**: MongoDB client, Redis, and Handlebars injected via Actix-web Data
+- **Flexible SSR**: If you don't need server-side rendering, simply exclude Handlebars dependencies and render routes - the project works perfectly as a JSON API-only backend
 
 ## Getting Started
 
@@ -176,10 +177,36 @@ docker run -d -p 3000:3000 \
   -e RUST_LOG=info \
   rust-web-starter
 
-# Run with MongoDB using docker-compose
-# (Create a docker-compose.yml for this)
+# Run with MongoDB and Redis using docker-compose
 docker-compose up -d
 ```
+
+#### Docker Compose
+
+The project includes a `docker-compose.yml` that orchestrates all services:
+
+```bash
+# Start all services (app, MongoDB, Redis)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+
+# Rebuild and restart
+docker-compose up -d --build
+```
+
+Services included:
+- **rust-web-starter** - The web application (port 3000)
+- **mongodb** - MongoDB database (port 27017)
+- **redis** - Redis cache (port 6379)
+
+Data persistence:
+- MongoDB data: `./data/mongodb`
+- Redis data: `./data/redis`
 
 The Dockerfile uses a multi-stage build:
 - **Stage 1 (builder)**: Compiles the Rust application with layer caching for dependencies

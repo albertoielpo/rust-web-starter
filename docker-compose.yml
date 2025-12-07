@@ -1,0 +1,45 @@
+networks:
+  micro-net:
+    driver: "bridge"
+
+services:
+  rust-web-starter:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    environment:
+      - RUST_LOG=debug
+      - BIND_ADDR=0.0.0.0
+      - BIND_PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_TIMEOUT_SECS=10
+      - REDIS_URI=redis://redis:6379
+      - REDIS_TIMEOUT_SECS=10
+      - TEMPLATES_DIR=/app/templates
+      - ASSETS_DIR=/app/assets
+    networks:
+      - micro-net
+    depends_on:
+      - redis
+      - mongodb
+
+  redis:
+    container_name: rust-web-redis
+    image: redis:8
+    ports:
+      - "6379:6379"
+    networks:
+      - micro-net
+    volumes:
+      - ./data/redis:/data
+
+  mongodb:
+    container_name: rust-web-mongodb
+    image: mongo:8.2
+    ports:
+      - "27017:27017"
+    networks:
+      - micro-net
+    volumes:
+      - ./data/mongodb:/data/db
