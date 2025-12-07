@@ -6,22 +6,22 @@ pub struct ErrorResponse {
     pub message: String,
 }
 
-/// wrapper for http 200 json response
+/// Helper function for HTTP 200 OK JSON response.
 pub fn http_ok(payload: impl Serialize) -> HttpResponse {
     HttpResponse::Ok().json(payload)
 }
 
-/// wrapper for http 204 response
+/// Helper function for HTTP 204 No Content response.
 pub fn http_no_content() -> HttpResponse {
     HttpResponse::NoContent().finish()
 }
 
-/// wrapper for http 400 json response
+/// Helper function for HTTP 400 Bad Request JSON response.
 pub fn http_bad_request(message: String) -> HttpResponse {
     HttpResponse::BadRequest().json(ErrorResponse { message: message })
 }
 
-/// wrapper for http 500 json response
+/// Helper function for HTTP 500 Internal Server Error JSON response.
 pub fn http_internal_server_error(message: String) -> HttpResponse {
     HttpResponse::InternalServerError().json(ErrorResponse { message: message })
 }

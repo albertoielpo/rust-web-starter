@@ -1,4 +1,7 @@
-/// here the users repository logic
+//! Business logic layer for user operations.
+//!
+//! This service layer orchestrates business logic and delegates
+//! data access operations to the repository layer.
 use actix_web::web;
 use mongodb::Client;
 

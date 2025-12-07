@@ -20,30 +20,77 @@ This project provides a foundational template for developing web applications an
 
 ## Architecture
 
-The project follows a modular, layered architecture:
+The project follows a modular, layered architecture with a clear folder structure paradigm:
 
 ```
 src/
 ├── lib.rs                      # Library root (public modules)
 ├── main.rs                     # Application entry point
+├── home/                       # Home page module (renders HTML)
+│   ├── mod.rs                 # Module exports
+│   ├── dto.rs                 # View models for templates
+│   └── home_render.rs         # Handlebars route handlers
 ├── shared/                     # Shared utilities and configurations
 │   ├── config/
 │   │   └── config.rs          # Server configuration, MongoDB, logging
 │   └── dto/
 │       └── response.rs        # HTTP response helpers
-└── users/                     # Users domain module
-    ├── dto.rs                 # Data transfer objects
-    ├── users_controller.rs   # HTTP handlers and routes
-    ├── users_service.rs      # Business logic layer
-    ├── users_repository.rs   # Data access layer
-    └── users_model.rs        # Domain models
+└── users/                      # Users domain module (REST API)
+    ├── mod.rs                  # Module exports
+    ├── dto.rs                  # Data transfer objects
+    ├── users_controller.rs     # REST API handlers (JSON responses)
+    ├── users_service.rs        # Business logic layer
+    ├── users_repository.rs     # Data access layer
+    └── users_model.rs          # Domain models
+```
+
+### Folder Structure Paradigm
+
+The project follows a consistent naming convention to distinguish between different types of routes:
+
+#### Naming Convention
+- **`{path}_render.rs`** - Handlebars template rendering (returns `text/html`)
+  - Example: `home_render.rs` serves HTML pages at `/`
+  - Used for server-side rendered web pages
+
+- **`{path}_controller.rs`** - REST API endpoints (returns `application/json`)
+  - Example: `users_controller.rs` serves JSON API at `/users`
+  - Used for RESTful web services
+
+#### Module Structure
+Each feature module follows this pattern:
+- **Folder name** = URL path segment (e.g., `home/` → `/`, `users/` → `/users`)
+- **File suffix** indicates response type (`_render` for HTML, `_controller` for JSON)
+- **`dto.rs`** contains data transfer objects (request/response models)
+- **`mod.rs`** exports public module members
+
+#### Adding New Features
+
+**To add a new HTML page** (e.g., `/about`):
+```
+src/about/
+├── mod.rs
+├── dto.rs                 # View models
+└── about_render.rs        # GET /about → renders about.hbs
+```
+
+**To add a new REST API** (e.g., `/products`):
+```
+src/products/
+├── mod.rs
+├── dto.rs                      # Request/response DTOs
+├── products_controller.rs      # REST endpoints
+├── products_service.rs         # Business logic
+├── products_repository.rs      # Database operations
+└── products_model.rs           # Domain models
 ```
 
 ### Design Patterns
 
 - **Layered Architecture**: Controller → Service → Repository pattern for separation of concerns
-- **Domain Modules**: Features organized by domain (users, etc.) for scalability
-- **Dependency Injection**: MongoDB client and Handlebars injected via Actix-web Data
+- **Domain Modules**: Features organized by domain (home, users, etc.) for scalability
+- **Clear Separation**: Render modules for HTML, controller modules for JSON APIs
+- **Dependency Injection**: MongoDB client, Redis, and Handlebars injected via Actix-web Data
 
 ## Getting Started
 
@@ -119,11 +166,11 @@ docker build -t rust-web-starter .
 
 ```bash
 # Run with default settings
-docker run -d -p 8080:8080 rust-web-starter
+docker run -d -p 3000:3000 rust-web-starter
 
 # Run with custom environment variables
-docker run -d -p 8080:8080 \
-  -e BIND_PORT=8080 \
+docker run -d -p 3000:3000 \
+  -e BIND_PORT=3000 \
   -e MONGODB_URI=mongodb://mongo:27017 \
   -e REDIS_URI=redis://redis:6379 \
   -e RUST_LOG=info \

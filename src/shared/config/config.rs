@@ -11,7 +11,7 @@ const DEFAULT_ASSETS_DIR: &str = "./assets";
 const DEFAULT_MONGODB_TIMEOUT_SECS: u64 = 10;
 const DEFAULT_REDIS_TIMEOUT_SECS: u64 = 10;
 
-/// Mongodb database name
+/// MongoDB database name used across the application.
 pub const DATABASE_NAME: &str = "template";
 
 pub struct ServerBind {
@@ -19,13 +19,19 @@ pub struct ServerBind {
     pub port: u16,
 }
 
-/// Init logger with env variable
+/// Initializes the logger with environment variable configuration.
+///
+/// Uses `RUST_LOG` environment variable, defaults to `debug` level.
 pub fn init_logger() {
     /* init logging library */
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
 }
 
-/// Init build server bind with env variables
+/// Builds server bind configuration from environment variables.
+///
+/// # Environment Variables
+/// - `BIND_ADDR` - Server bind address (default: 0.0.0.0)
+/// - `BIND_PORT` - Server port (default: 3000)
 pub fn build_server_bind() -> ServerBind {
     /* init server bind */
     let addr = match env::var("BIND_ADDR") {
@@ -40,7 +46,14 @@ pub fn build_server_bind() -> ServerBind {
     return ServerBind { addr, port };
 }
 
-/// init connection to mongodb and return the client
+/// Initializes MongoDB connection and returns the client.
+///
+/// # Environment Variables
+/// - `MONGODB_URI` - MongoDB connection string (default: mongodb://localhost:27017)
+/// - `MONGODB_TIMEOUT_SECS` - Connection timeout in seconds (default: 10)
+///
+/// # Panics
+/// Panics if the connection cannot be established within the timeout period.
 pub async fn init_mongodb() -> Client {
     let uri = env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".into());
 
@@ -92,7 +105,13 @@ pub async fn init_mongodb() -> Client {
     }
 }
 
-/// Build handlebars template engine with templates directory
+/// Builds Handlebars template engine with templates directory.
+///
+/// # Environment Variables
+/// - `TEMPLATES_DIR` - Path to templates directory (default: ./templates)
+///
+/// # Panics
+/// Panics if the templates directory is not found.
 pub fn build_handlebars() -> Handlebars<'static> {
     let mut handlebars = Handlebars::new();
 
@@ -111,7 +130,10 @@ pub fn build_handlebars() -> Handlebars<'static> {
     handlebars
 }
 
-/// Get assets directory path from env or default
+/// Gets the assets directory path from environment or default.
+///
+/// # Environment Variables
+/// - `ASSETS_DIR` - Path to static assets directory (default: ./assets)
 pub fn get_assets_dir() -> String {
     let assets_dir = env::var("ASSETS_DIR").unwrap_or_else(|_| {
         let mut path = env::current_dir().expect("Failed to get current directory");
@@ -124,7 +146,14 @@ pub fn get_assets_dir() -> String {
     assets_dir
 }
 
-/// Init connection to Redis and return the connection manager
+/// Initializes Redis connection and returns the connection manager.
+///
+/// # Environment Variables
+/// - `REDIS_URI` - Redis connection string (default: redis://localhost:6379)
+/// - `REDIS_TIMEOUT_SECS` - Connection timeout in seconds (default: 10)
+///
+/// # Panics
+/// Panics if the connection cannot be established within the timeout period.
 pub async fn init_redis() -> ConnectionManager {
     let uri = env::var("REDIS_URI").unwrap_or_else(|_| "redis://localhost:6379".into());
 

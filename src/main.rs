@@ -1,7 +1,28 @@
-//! Architecture model application built with Actix-web and Handlebars.
+//! Rust web starter application.
 //!
-//! This application demonstrates a simple web server using Actix-web framework
-//! with Handlebars templating for server-side rendering.
+//! A production-ready web server starter template featuring:
+//! - **Actix-web** framework for high-performance HTTP handling
+//! - **Handlebars** templating engine for server-side rendering
+//! - **MongoDB** integration for document storage
+//! - **Redis** integration for caching and session management
+//! - Structured logging with configurable levels
+//! - Static file serving
+//! - RESTful API endpoints
+//!
+//! # Architecture
+//!
+//! The application follows a modular architecture with:
+//! - Middleware stack: panic handling, path normalization, request logging
+//! - Dependency injection via Actix-web's `Data` extractor
+//! - Separate controller modules for API routes (e.g., users module)
+//!
+//! # Quick Start
+//!
+//! ```bash
+//! cargo run
+//! ```
+//!
+//! The server listens on the configured address (default: 0.0.0.0:3000).
 //!
 //! # Author
 //! Alberto Ielpo
@@ -10,56 +31,24 @@
 //! MIT
 use actix_files::Files;
 use actix_web::{
-    App, HttpResponse, HttpServer, Result,
+    App, HttpServer,
     middleware::{Logger, NormalizePath, TrailingSlash},
     web,
 };
 use actix_web_lab::middleware::CatchPanic;
-use handlebars::Handlebars;
 use log::debug;
-use redis::{AsyncCommands, RedisError, aio::ConnectionManager};
 use rust_web_starter::{
+    home,
     shared::config::config::{
         build_handlebars, build_server_bind, get_assets_dir, init_logger, init_mongodb, init_redis,
     },
     users,
 };
-use serde::Serialize;
-use time::{OffsetDateTime, format_description::well_known::Iso8601};
-
-#[derive(Serialize)]
-struct IndexData {
-    iso_date: String,
-    mykey: String,
-}
-
-/// Serves the index page by rendering the Handlebars template.
-///
-/// This handler loads the `index.hbs` template, injects the current ISO 8601
-/// formatted timestamp, and returns the rendered HTML response.
-async fn index(
-    hb: web::Data<Handlebars<'_>>,
-    redis: web::Data<ConnectionManager>,
-) -> Result<HttpResponse> {
-    let now = OffsetDateTime::now_utc();
-    let iso_date = now
-        .format(&Iso8601::DEFAULT)
-        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
-
-    let x: Result<String, RedisError> = redis.get_ref().clone().get("mykey").await;
-    let x = x.map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
-    let data = IndexData { iso_date, mykey: x };
-    let body = hb
-        .render("index", &data)
-        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
-
-    Ok(HttpResponse::Ok().content_type("text/html").body(body))
-}
 
 /// Application entry point.
 ///
 /// Initializes the Actix-web server, configures Handlebars templating,
-/// and starts listening for HTTP requests on 127.0.0.1:8080.
+/// and starts listening for HTTP requests on 0.0.0.0:3000.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     init_logger();
@@ -86,11 +75,11 @@ async fn main() -> std::io::Result<()> {
             .wrap(NormalizePath::new(TrailingSlash::Trim)) // normalize path
             .wrap(CatchPanic::default()) // CatchPanic must be before Logger
             .wrap(Logger::default()) // last wrap
-            // html page
-            .route("/", web::get().to(index))
-            // static assets
+            // render, response text/html on path /
+            .service(web::scope("/").configure(home::home_render::config))
+            // static assets, serve as is
             .service(Files::new("/assets", assets_dir.clone()))
-            // rest controller
+            // rest controllers, response application/json on path /users
             .service(web::scope("/users").configure(users::users_controller::config))
     })
     .bind((server_bind.addr, server_bind.port))?

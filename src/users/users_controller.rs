@@ -18,15 +18,22 @@ use mongodb::{
     Client, Collection,
 };
 
-/// all route are prefixed with users name, because is specified inside the main.rs
+/// REST API controller for user management.
 ///
-/// route <host>/users
+/// All routes are prefixed with `/users` as specified in main.rs via `web::scope("/users")`.
+///
+/// # Routes
+/// - `GET /users` - Get all users
+/// - `GET /users/{id}` - Get user by ID
+/// - `POST /users` - Create new user
+/// - `PATCH /users/{id}` - Update user by ID
+/// - `DELETE /users/{id}` - Delete user by ID
 
 #[get("")]
 async fn get_all(client: web::Data<Client>) -> HttpResponse {
     let collection: Collection<User> = client.database(DATABASE_NAME).collection(USERS_COLLECTION);
 
-    // in this case fetch from the network but to 100 elements then redo the network call
+    // Fetch from the network with batch size of 100 elements per network call
     let find_opts: FindOptions = FindOptions::builder().batch_size(100).build();
     let cursor = collection.find(doc! {}).with_options(find_opts).await;
 
@@ -39,7 +46,7 @@ async fn get_all(client: web::Data<Client>) -> HttpResponse {
     };
 
     let mut users: Vec<UserDtoResponse> = Vec::new();
-    // retrieve data
+    // Retrieve and deserialize user data from cursor
     while cursor.advance().await.unwrap_or_else(|_| false) {
         let current = cursor.deserialize_current();
         match current {
@@ -57,7 +64,7 @@ async fn get_all(client: web::Data<Client>) -> HttpResponse {
         }
     }
 
-    // using futures
+    // Alternative approach using futures (commented out)
     // while let Some(result) = cursor.try_next().await.unwrap_or_else(|err| {
     //     error!("Not valid user: {}", err);
     //     None
@@ -121,7 +128,7 @@ async fn create(client: web::Data<Client>, dto: web::Json<CreateUserDtoRequest>)
             return http_internal_server_error("Failed to insert user".into());
         }
     };
-    // contains the inserted id
+    // Extract and return the inserted ObjectId
     match insert_result.inserted_id {
         Bson::ObjectId(oid) => http_ok(UserIdDtoResponse { id: oid.to_hex() }),
         _ => http_internal_server_error("Failed to insert user".into()),
@@ -134,7 +141,7 @@ async fn update_by_id(
     id: web::Path<String>,
     dto: web::Json<UpdateUserDtoRequest>,
 ) -> HttpResponse {
-    let id: String = id.into_inner(); // path does no longer exist
+    let id: String = id.into_inner(); // Extract ID from path parameter
     let object_id = ObjectId::parse_str(&id).unwrap_or_default();
     let collection: Collection<User> = client.database(DATABASE_NAME).collection(USERS_COLLECTION);
 
@@ -189,7 +196,9 @@ async fn delete_by_id(client: web::Data<Client>, id: web::Path<String>) -> HttpR
     }
 }
 
-/// service configuration
+/// Service configuration for user routes.
+///
+/// Registers all user endpoint handlers with the Actix-web application.
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(get_all);
     cfg.service(get_by_id);

@@ -1,4 +1,6 @@
-/// here the users repository logic
+//! Data access layer for user operations.
+//!
+//! This repository layer handles all database operations for the User entity.
 use actix_web::web;
 
 use mongodb::{
@@ -12,6 +14,8 @@ use crate::{
 };
 use log::error;
 
+// NOTE: The following repository methods are currently implemented directly in the controller.
+// Uncomment and implement these methods to follow the complete repository pattern:
 // pub async fn get_all() {}
 // pub async fn get_by_id() {}
 // pub async fn create() {}

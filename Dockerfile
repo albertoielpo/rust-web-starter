@@ -34,7 +34,7 @@ ENV ASSETS_DIR=/app/assets
 ENV TEMPLATES_DIR=/app/templates
 
 # Expose the port the app runs on
-EXPOSE 8080
+EXPOSE 3000
 
 # Run the application
 CMD ["/app/rust-web-starter"]
