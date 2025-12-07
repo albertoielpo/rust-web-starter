@@ -27,8 +27,9 @@ services:
   redis:
     container_name: rust-web-redis
     image: redis:8
-    ports:
-      - "6379:6379"
+    # Only expose port for development/debugging
+    # ports:
+    #   - "6379:6379"
     networks:
       - micro-net
     volumes:
@@ -37,8 +38,9 @@ services:
   mongodb:
     container_name: rust-web-mongodb
     image: mongo:8.2
-    ports:
-      - "27017:27017"
+    # Only expose port for development/debugging
+    # ports:
+    #   - "27017:27017"
     networks:
       - micro-net
     volumes:
