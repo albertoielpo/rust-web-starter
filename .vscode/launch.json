@@ -1,6 +1,30 @@
 {
     "version": "0.2.0",
     "configurations": [
-        
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Rust Web Starter (CodeLLDB)",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rust-web-starter",
+                    "--package=rust-web-starter"
+                ],
+                "filter": {
+                    "name": "rust-web-starter",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "RUST_LOG": "debug",
+                "BIND_ADDR": "0.0.0.0",
+                "BIND_PORT": "3000",
+                "MONGODB_URI": "mongodb://localhost:27017",
+                "REDIS_URI": "redis://localhost:6379"
+            }
+        },
     ]
 }

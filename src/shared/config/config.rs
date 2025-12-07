@@ -195,3 +195,15 @@ pub async fn init_redis() -> ConnectionManager {
         }
     }
 }
+
+pub enum RedisKeys {
+    FirstHit,
+}
+
+impl RedisKeys {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            RedisKeys::FirstHit => "rust-web-starter:first-hit",
+        }
+    }
+}
