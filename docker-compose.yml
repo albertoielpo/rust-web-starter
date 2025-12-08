@@ -6,10 +6,13 @@ services:
   rust-web-starter:
     build:
       context: .
+    # bind external:internal
     ports:
       - "3000:3000"
     environment:
-      - RUST_LOG=debug
+      # RUST_LOG sets default level, then overrides per crate
+      - RUST_LOG=debug,actix_web::middleware::logger=warn
+      # internal binds
       - BIND_ADDR=0.0.0.0
       - BIND_PORT=3000
       - MONGODB_URI=mongodb://mongodb:27017
