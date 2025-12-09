@@ -43,7 +43,7 @@ pub fn build_server_bind() -> ServerBind {
         Err(_) => DEFAULT_PORT,
     };
 
-    return ServerBind { addr, port };
+    ServerBind { addr, port }
 }
 
 /// Initializes MongoDB connection and returns the client.

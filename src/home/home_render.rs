@@ -3,7 +3,7 @@ use handlebars::Handlebars;
 use redis::{AsyncCommands, RedisError, aio::ConnectionManager};
 use time::{OffsetDateTime, format_description::well_known::Iso8601};
 
-use crate::{home::dto::HomeData, shared::config::config::RedisKeys};
+use crate::{home::dto::HomeData, shared::config::settings::RedisKeys};
 
 /// Serves the home page by rendering the Handlebars template.
 ///
@@ -26,23 +26,24 @@ async fn home(
     let now = OffsetDateTime::now_utc();
     let mut iso_date = now
         .format(&Iso8601::DEFAULT)
-        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+        .map_err(actix_web::error::ErrorInternalServerError)?;
 
     let res: Result<String, RedisError> = redis
         .get_ref()
         .clone()
         .get(RedisKeys::FirstHit.as_str())
         .await;
-    if res.is_err() {
-        // key not found, then set
-        let res: Result<String, RedisError> = redis
-            .get_ref()
-            .clone()
-            .set(RedisKeys::FirstHit.as_str(), iso_date.clone())
-            .await;
-        res.map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
-    } else {
-        iso_date = res.unwrap();
+
+    match res {
+        Ok(res) => iso_date = res,
+        Err(_) => {
+            let res: Result<String, RedisError> = redis
+                .get_ref()
+                .clone()
+                .set(RedisKeys::FirstHit.as_str(), iso_date.clone())
+                .await;
+            res.map_err(actix_web::error::ErrorInternalServerError)?;
+        }
     }
 
     let data = HomeData {
@@ -51,7 +52,7 @@ async fn home(
     };
     let body = hb
         .render("home", &data)
-        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+        .map_err(actix_web::error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok().content_type("text/html").body(body))
 }

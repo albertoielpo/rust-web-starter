@@ -18,10 +18,10 @@ pub fn http_no_content() -> HttpResponse {
 
 /// Helper function for HTTP 400 Bad Request JSON response.
 pub fn http_bad_request(message: String) -> HttpResponse {
-    HttpResponse::BadRequest().json(ErrorResponse { message: message })
+    HttpResponse::BadRequest().json(ErrorResponse { message })
 }
 
 /// Helper function for HTTP 500 Internal Server Error JSON response.
 pub fn http_internal_server_error(message: String) -> HttpResponse {
-    HttpResponse::InternalServerError().json(ErrorResponse { message: message })
+    HttpResponse::InternalServerError().json(ErrorResponse { message })
 }

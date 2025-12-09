@@ -1,21 +1,21 @@
 use super::dto::UserDtoResponse;
 use crate::{
     shared::{
-        config::config::DATABASE_NAME,
+        config::settings::DATABASE_NAME,
         dto::response::{http_bad_request, http_internal_server_error, http_no_content, http_ok},
     },
     users::{
         dto::{CreateUserDtoRequest, UpdateUserDtoRequest, UserIdDtoResponse},
-        users_model::{User, USERS_COLLECTION},
+        users_model::{USERS_COLLECTION, User},
         users_service,
     },
 };
-use actix_web::{delete, get, patch, post, web, HttpResponse};
+use actix_web::{HttpResponse, delete, get, patch, post, web};
 use log::error;
 use mongodb::{
-    bson::{doc, oid::ObjectId, to_document, Bson},
-    options::{FindOneAndUpdateOptions, FindOptions, ReturnDocument},
     Client, Collection,
+    bson::{Bson, doc, oid::ObjectId, to_document},
+    options::{FindOneAndUpdateOptions, FindOptions, ReturnDocument},
 };
 
 /// REST API controller for user management.
@@ -47,7 +47,7 @@ async fn get_all(client: web::Data<Client>) -> HttpResponse {
 
     let mut users: Vec<UserDtoResponse> = Vec::new();
     // Retrieve and deserialize user data from cursor
-    while cursor.advance().await.unwrap_or_else(|_| false) {
+    while cursor.advance().await.unwrap_or(false) {
         let current = cursor.deserialize_current();
         match current {
             Ok(user) => {

@@ -39,7 +39,7 @@ use actix_web_lab::middleware::CatchPanic;
 use log::debug;
 use rust_web_starter::{
     home,
-    shared::config::config::{
+    shared::config::settings::{
         build_handlebars, build_server_bind, get_assets_dir, init_logger, init_mongodb, init_redis,
     },
     users,
