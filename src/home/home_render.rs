@@ -24,27 +24,28 @@ async fn home(
     redis: web::Data<ConnectionManager>,
 ) -> Result<HttpResponse> {
     let now = OffsetDateTime::now_utc();
-    let mut iso_date = now
-        .format(&Iso8601::DEFAULT)
-        .map_err(actix_web::error::ErrorInternalServerError)?;
-
+    // find data in redis
     let res: Result<String, RedisError> = redis
         .get_ref()
         .clone()
         .get(RedisKeys::FirstHit.as_str())
         .await;
 
-    match res {
-        Ok(res) => iso_date = res,
+    let iso_date = match res {
+        Ok(res) => res, // if found
         Err(_) => {
+            let iso_date = now
+                .format(&Iso8601::DEFAULT)
+                .map_err(actix_web::error::ErrorInternalServerError)?;
             let res: Result<String, RedisError> = redis
                 .get_ref()
                 .clone()
-                .set(RedisKeys::FirstHit.as_str(), iso_date.clone())
+                .set(RedisKeys::FirstHit.as_str(), iso_date.as_str())
                 .await;
             res.map_err(actix_web::error::ErrorInternalServerError)?;
+            iso_date
         }
-    }
+    };
 
     let data = HomeData {
         first_hit: iso_date,
